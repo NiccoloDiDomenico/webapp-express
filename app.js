@@ -3,10 +3,16 @@ const express = require('express');
 const moviesRouters = require('./routers/moviesRouters');
 const errorsHandler = require('./middlewares/errorsHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
+const cors = require('cors');
 
 // Creazione dell'app express
 const app = express();
 const port = process.env.SERVER_PORT;
+
+// Cors
+app.use(cors({
+    origin: process.env.FRONTEND_URL
+}))
 
 // Rendo la cartella public accessibile da fuori
 app.use(express.static('public'));
