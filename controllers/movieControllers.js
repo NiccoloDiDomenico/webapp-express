@@ -21,7 +21,8 @@ function index(req, res) {
     // esegue la query
     connection.query(sql, params, (err, results) => {
         // gestione errore
-        if (err) return res.status(500).json({ error: 'Database query failed' })
+        if (err)
+            return res.status(500).json({ error: 'Database query failed' })
         // gestione risposta
         res.json(results)
     });
@@ -36,7 +37,7 @@ function show(req, res) {
     const movieSql = `
         SELECT movies.*, CAST(AVG(reviews.vote) AS FLOAT) AS vote_avg
         FROM movies
-        JOIN reviews
+        LEFT JOIN reviews
         ON movies.id = reviews.movie_id
         WHERE movies.id = ?
     `
@@ -53,16 +54,19 @@ function show(req, res) {
     // esegue la query per il film
     connection.query(movieSql, [id], (err, movieResults) => {
         // gestione errore
-        if (err) return res.status(500).json({ error: 'Database query failed' });
+        if (err)
+            return res.status(500).json({ error: 'Database query failed' });
         // gestione corrispondenza non trovato 
-        if (movieResults.length === 0) return res.status(404).json({ error: 'Item not found' });
+        if (movieResults.length === 0 || movieResults[0].id === null)
+            return res.status(404).json({ error: 'Item not found' });
         // recupera il film
         const movie = movieResults[0];
 
         // se è andata bene, esegue la query per le reviews
         connection.query(reviewsSql, [id], (err, reviewsResults) => {
             // gestione errore
-            if (err) return res.status(500).json({ error: 'Database query failed' });
+            if (err)
+                return res.status(500).json({ error: 'Database query failed' });
 
             // aggiunge le reviews al film
             movie.reviews = reviewsResults;
