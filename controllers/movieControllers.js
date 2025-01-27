@@ -33,7 +33,13 @@ function show(req, res) {
     const id = req.params.id
 
     // prepara la query per il film
-    const movieSql = 'SELECT * FROM movies WHERE id = ?';
+    const movieSql = `
+        SELECT movies.*, CAST(AVG(reviews.vote) AS FLOAT) AS vote_avg
+        FROM movies
+        JOIN reviews
+        ON movies.id = reviews.movie_id
+        WHERE movies.id = ?
+    `
 
     // prepara la query per la recensione
     const reviewsSql = `
