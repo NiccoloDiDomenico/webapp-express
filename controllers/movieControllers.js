@@ -4,10 +4,22 @@ const connection = require('../data/movies_db');
 // index
 function index(req, res) {
     // prepara la query 
-    const sql = 'SELECT * FROM movies';
+    let sql = 'SELECT * FROM movies';
+
+    // preleva i parametri
+    const filter = req.query;
+    let params = [];
+
+    // check per i parametri
+    if (filter.search) {
+        sql += `
+            WHERE title LIKE ?
+        `;
+        params.push(`%${filter.search}%`);
+    }
 
     // esegue la query
-    connection.query(sql, (err, results) => {
+    connection.query(sql, params, (err, results) => {
         // gestione errore
         if (err) return res.status(500).json({ error: 'Database query failed' })
         // gestione risposta
