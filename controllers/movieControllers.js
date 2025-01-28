@@ -57,7 +57,7 @@ function index(req, res) {
 //show
 function show(req, res) {
     // recupeera l'id dall'URL
-    const id = req.params.id
+    const slug = req.params.slug
 
     // prepara la query per il film
     const movieSql = `
@@ -65,20 +65,20 @@ function show(req, res) {
         FROM movies
         LEFT JOIN reviews
         ON movies.id = reviews.movie_id
-        WHERE movies.id = ?
-                `
+        WHERE movies.slug = ?
+    `
 
     // prepara la query per la recensione
     const reviewsSql = `
         SELECT reviews.*
-            FROM movies
+        FROM movies
         JOIN reviews
         ON movies.id = reviews.movie_id
-        WHERE movies.id = ?
-                `
+        WHERE movies.slug = ?
+    `
 
     // esegue la query per il film
-    connection.query(movieSql, [id], (err, movieResults) => {
+    connection.query(movieSql, [slug], (err, movieResults) => {
         // gestione errore
         if (err)
             return res.status(500).json({ error: 'Database query failed' });
@@ -89,7 +89,7 @@ function show(req, res) {
         const movie = movieResults[0];
 
         // se è andata bene, esegue la query per le reviews
-        connection.query(reviewsSql, [id], (err, reviewsResults) => {
+        connection.query(reviewsSql, [slug], (err, reviewsResults) => {
             // gestione errore
             if (err)
                 return res.status(500).json({ error: 'Database query failed' });
