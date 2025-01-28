@@ -6,21 +6,47 @@ function index(req, res) {
     // prepara la query 
     let sql = 'SELECT * FROM movies';
 
-    // preleva i parametri
+    // preleva i query params se ci sono
     const filter = req.query;
     let params = [];
+    const conditions = [];
 
-    // check per i parametri
+    // check per i query params: SEARCH se sono stati prelevati
     if (filter.search) {
-        sql += `
-            WHERE title LIKE ?
-        `;
+        conditions.push(`title LIKE ?`);
         params.push(`%${filter.search}%`);
-    }
+    };
+
+    // check per i query params: GENRE se sono stati prelevati
+    if (filter.genre) {
+        conditions.push(`genre = ?`)
+        params.push(`${filter.genre}`);
+    };
+
+    // check per i query params: release_year se sono stati prelevati
+    if (filter.release_year) {
+        conditions.push(`release_year = ?`)
+        params.push(`${filter.release_year}`);
+    };
+
+    // aggiorna la query se sono stati prelevati i query params
+    if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(' AND ')}`;
+    };
+
+    // for (const key in req.query) {
+    //     if (key === "search") {
+    //         conditions.push(`${key} LIKE ?`);
+    //         params.push(`%${key}%`);
+    //     } else if (key !== "search") {
+    //         conditions.push(`${key} = ?`);
+    //         params.push(req.query[key]);
+    //     }
+    // };
 
     // esegue la query
     connection.query(sql, params, (err, results) => {
-        // gestione errore
+        // gestione errore 
         if (err)
             return res.status(500).json({ error: 'Database query failed' })
         // gestione risposta
@@ -40,16 +66,16 @@ function show(req, res) {
         LEFT JOIN reviews
         ON movies.id = reviews.movie_id
         WHERE movies.id = ?
-    `
+                `
 
     // prepara la query per la recensione
     const reviewsSql = `
-        SELECT reviews.* 
-        FROM movies
+        SELECT reviews.*
+            FROM movies
         JOIN reviews
         ON movies.id = reviews.movie_id
         WHERE movies.id = ?
-    `
+                `
 
     // esegue la query per il film
     connection.query(movieSql, [id], (err, movieResults) => {
