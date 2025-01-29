@@ -34,14 +34,10 @@ function index(req, res) {
         sql += ` WHERE ${conditions.join(' AND ')}`;
     };
 
+    // Query Buldier
     // for (const key in req.query) {
-    //     if (key === "search") {
-    //         conditions.push(`${key} LIKE ?`);
-    //         params.push(`%${key}%`);
-    //     } else if (key !== "search") {
     //         conditions.push(`${key} = ?`);
     //         params.push(req.query[key]);
-    //     }
     // };
 
     // esegue la query
@@ -93,12 +89,52 @@ function show(req, res) {
             // gestione errore
             if (err)
                 return res.status(500).json({ error: 'Database query failed' });
-
             // aggiunge le reviews al film
             movie.reviews = reviewsResults;
-
             // gestione risposta
             res.json(movie);
+        });
+    });
+};
+
+// Store
+function storeReview(req, res) {
+    // recupera i dati dalla richiesta
+    const id = req.params.id
+    const { name, vote, text } = req.body
+
+    // preparo la query che verifica se il film esiste
+    const movieSql = `
+        SELECT * 
+        FROM reviewss
+        WHERE id = ?
+    `
+    // preparo la query che aggiunge dei nuovi elementi alla tabella 
+    const reviewSql = `
+        INSERT INTO reviews(movie_id, name, vote, text)
+        VALUES (?,?,?,?)
+    `
+
+    // esegue la query per verificare se il film esiste
+    connection.query(movieSql, [id], (err, movieResults) => {
+        // gestione errore 
+        if (err)
+            return res.status(500).json({ error: 'Database query failed' });
+        // gestione corrispondenza non trovato 
+        if (movieResults.length === 0 || movieResults[0].id === null)
+            return res.status(404).json({ error: 'Item not found' });
+
+        // se è andata bene, esegue la query per le reviews
+        connection.query(reviewSql, [id, name, vote, text], (err, reviewsResults) => {
+            // gestione errore
+            if (err)
+                return res.status(500).json({ error: 'Database query failed' });
+            // gestione corrispondenza non trovato 
+            if (reviewsResults.length === 0 || movieResults[0].id === null)
+                return res.status(404).json({ error: 'Item not found' });
+            // gestione risposta
+            res.status(201).json({ message: "Recensione aggiunta" })
+            console.log(results);
         });
     });
 };
@@ -106,5 +142,6 @@ function show(req, res) {
 // Exports
 module.exports = {
     index,
-    show
+    show,
+    storeReview
 }
