@@ -1,4 +1,5 @@
 // Import
+const { default: slugify } = require('slugify');
 const connection = require('../data/movies_db');
 
 // index
@@ -88,7 +89,7 @@ function show(req, res) {
         connection.query(reviewsSql, [slug], (err, reviewsResults) => {
             // gestione errore
             if (err)
-                return res.status(500).json({ error: 'Database query failed' });
+                return res.status(500).json({ error: 'Database query failed', err: err.stack });
             // aggiunge le reviews al film
             movie.reviews = reviewsResults;
             // gestione risposta
@@ -97,7 +98,33 @@ function show(req, res) {
     });
 };
 
-// Store
+// Store movie
+function storeMovie(req, res) {
+    // recupero i dati dalla richiesta
+    const imageName = req.file.filename
+    const { title, director, genre, release_year, abstract } = req.body
+    const slug = slugify(title, {
+        lower: true,
+        strict: true
+    })
+
+    // preparo la query che aggiungi un nuovo film
+    const createMovieSql = `
+        INSERT INTO movies(slug, title, director, genre, release_year, abstract, image)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `
+
+    // esegue la query per verificare se il film esiste
+    connection.query(createMovieSql, [slug, title, director, genre, release_year, abstract, imageName], (err, results) => {
+        // gestione errore 
+        if (err)
+            return res.status(500).json({ error: 'Database query failed' })
+        // gestione risposta
+        res.status(201).json({ message: "Film aggiunto" })
+    });
+};
+
+// Store movie review
 function storeReview(req, res) {
     // recupera i dati dalla richiesta
     const id = req.params.id
@@ -106,10 +133,11 @@ function storeReview(req, res) {
     // preparo la query che verifica se il film esiste
     const movieSql = `
         SELECT * 
-        FROM reviewss
+        FROM reviews
         WHERE id = ?
     `
-    // preparo la query che aggiunge dei nuovi elementi alla tabella 
+
+    // preparo la query che aggiunge una nuova recensione
     const reviewSql = `
         INSERT INTO reviews(movie_id, name, vote, text)
         VALUES (?,?,?,?)
@@ -134,7 +162,6 @@ function storeReview(req, res) {
                 return res.status(404).json({ error: 'Item not found' });
             // gestione risposta
             res.status(201).json({ message: "Recensione aggiunta" })
-            console.log(results);
         });
     });
 };
@@ -143,5 +170,6 @@ function storeReview(req, res) {
 module.exports = {
     index,
     show,
+    storeMovie,
     storeReview
 }
